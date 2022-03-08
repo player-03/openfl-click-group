@@ -1,10 +1,10 @@
 {
   "name": "openfl-click-group",
   "url" : "https://github.com/player-03/openfl-click-group",
-  "tags": [],
+  "tags": ["openfl"],
   "description": "A tool for customizing OpenFL's click events.",
-  "version": "1.0.0",
-  "releasenote": "",
+  "version": "1.1.0",
+  "releasenote": "Implement getOriginalTarget().",
   "license": "MIT",
   "contributors": ["player_03"],
   "dependencies": {

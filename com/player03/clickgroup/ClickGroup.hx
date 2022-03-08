@@ -26,11 +26,11 @@ import openfl.events.TouchEvent;
 class ClickGroup {
 	private var members:Array<InteractiveObject> = [];
 	
-	private var info:Array<EventInfoWrapper>;
+	private var supportedEvents:Array<EventInfoWrapper>;
 	private var status:ClickStatus = new ClickStatus();
 	
 	public function new(...objects:InteractiveObject) {
-		info = [
+		supportedEvents = [
 			new EventInfoWrapper(status, cast new LeftClickEventInfo()),
 			new EventInfoWrapper(status, cast new MiddleClickEventInfo()),
 			new EventInfoWrapper(status, cast new RightClickEventInfo()),
@@ -48,7 +48,7 @@ class ClickGroup {
 	public function add(object:InteractiveObject):Void {
 		members.push(object);
 		
-		for(infoWrapper in info) {
+		for(infoWrapper in supportedEvents) {
 			infoWrapper.add(object);
 		}
 	}
@@ -63,8 +63,16 @@ class ClickGroup {
 		object.addEventListener(Event.REMOVED_FROM_STAGE, removeTarget);
 	}
 	
-	public inline function has(object:InteractiveObject):Bool {
-		return members.indexOf(object) >= 0;
+	public function has(object:InteractiveObject):Bool {
+		if(members.indexOf(object) >= 0) {
+			return true;
+		}
+		
+		if(object.parent != null) {
+			return has(object.parent);
+		} else {
+			return false;
+		}
 	}
 	
 	private function removeTarget(e:Event):Void {
@@ -74,7 +82,7 @@ class ClickGroup {
 	public function remove(object:InteractiveObject):Void {
 		members.remove(object);
 		
-		for(infoWrapper in info) {
+		for(infoWrapper in supportedEvents) {
 			infoWrapper.remove(object);
 		}
 		
@@ -82,14 +90,31 @@ class ClickGroup {
 	}
 	
 	/**
+	 * Finds the object over which the pointer began.
+	 * @param clickEvent A `CLICK`, `MIDDLE_CLICK`, `RIGHT_CLICK`, or
+	 * `TOUCH_TAP` event.
+	 * @return Where the most recent event of this type began. `null` if this
+	 * group has no record of such an event.
+	 */
+	public function getOriginalTarget(clickEvent:Event):InteractiveObject {
+		for(infoWrapper in supportedEvents) {
+			if(infoWrapper.info.clickEvent == clickEvent.type) {
+				return infoWrapper.info.getOriginalValue(status, clickEvent);
+			}
+		}
+		
+		return null;
+	}
+	
+	/**
 	 * Listens for when the pointer is dragged over a new object.
 	 */
 	public inline function addTargetChangeEventListener(listener:TargetChangeEvent -> Void, ?useCapture:Bool = false, ?priority:Int = 0, ?useWeakReference:Bool = false):Void {
-		status.addEventListener(TargetChangeEvent.TARGET_CHANGE, listener, useCapture, priority, useWeakReference);
+		status.event.addEventListener(TargetChangeEvent.TARGET_CHANGE, listener, useCapture, priority, useWeakReference);
 	}
 	
 	public inline function removeTargetChangeEventListener(listener:TargetChangeEvent -> Void, ?useCapture:Bool = false):Void {
-		status.removeEventListener(TargetChangeEvent.TARGET_CHANGE, listener, useCapture);
+		status.event.removeEventListener(TargetChangeEvent.TARGET_CHANGE, listener, useCapture);
 	}
 	
 	@:noCompletion public inline function iterator():Iterator<InteractiveObject> {
@@ -99,23 +124,34 @@ class ClickGroup {
 
 /**
  * Tracks the status of each type of click event.
- * 
- * Dispatches `TargetChangeEvent.TARGET_CHANGE`.
  */
-@:allow(com.player03.clickgroup.ClickEventInfo)
-class ClickStatus extends EventDispatcher {
-	private var mouseDownLeft:InteractiveObject = null;
-	private var mouseDownMiddle:InteractiveObject = null;
-	private var mouseDownRight:InteractiveObject = null;
-	private var touchTargets:Array<InteractiveObject> = [];
+class ClickStatus extends BaseClickStatus {
+	@:allow(com.player03.clickgroup.ClickEventInfo)
+	private var origin:BaseClickStatus = new BaseClickStatus();
+	
+	@:allow(com.player03.clickgroup.EventInfoWrapper)
+	@:allow(com.player03.clickgroup.ClickGroup)
+	private var event:EventDispatcher = new EventDispatcher();
 	
 	public inline function new() {
 		super();
 	}
 }
 
+@:noCompletion
+@:allow(com.player03.clickgroup.ClickEventInfo)
+class BaseClickStatus {
+	private var mouseDownLeft:InteractiveObject = null;
+	private var mouseDownMiddle:InteractiveObject = null;
+	private var mouseDownRight:InteractiveObject = null;
+	private var touchTargets:Array<InteractiveObject> = [];
+	
+	private inline function new() {}
+}
+
 private class EventInfoWrapper {
 	private var status:ClickStatus;
+	@:allow(com.player03.clickgroup.ClickGroup)
 	private var info:ClickEventInfo<Event>;
 	
 	public function new(status:ClickStatus, info:ClickEventInfo<Event>) {
@@ -138,7 +174,7 @@ private class EventInfoWrapper {
 	}
 	
 	public function onPointerDown(e:Event):Void {
-		info.setValue(status, e, e.target);
+		info.setOriginalValue(status, e, e.target);
 	}
 	
 	public function onPointerOver(e:Event):Void {
@@ -155,10 +191,10 @@ private class EventInfoWrapper {
 				info.setValue(status, e, e.target);
 				info.setStageValue(stage, e, e.target);
 				
-				status.dispatchEvent(new TargetChangeEvent(e, oldTarget, e.target, info));
+				status.event.dispatchEvent(new TargetChangeEvent(e, oldTarget, e.target, info));
 			} else {
 				//If not, the pointer was most likely released outside.
-				info.setValue(status, e, null);
+				info.setOriginalValue(status, e, null);
 			}
 		}
 	}
@@ -168,7 +204,7 @@ private class EventInfoWrapper {
 		if(stage != null) {
 			var oldTarget:InteractiveObject = info.getValue(status, e);
 			if(oldTarget != null && oldTarget == info.getStageValue(stage, e)) {
-				status.dispatchEvent(new TargetChangeEvent(e, oldTarget, null, info));
+				status.event.dispatchEvent(new TargetChangeEvent(e, oldTarget, null, info));
 			}
 		}
 	}

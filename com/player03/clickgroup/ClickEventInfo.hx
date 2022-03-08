@@ -12,6 +12,7 @@ import openfl.events.TouchEvent;
  * Information about a single type of click event, for internal use.
  */
 @:allow(com.player03.clickgroup.EventInfoWrapper)
+@:allow(com.player03.clickgroup.ClickGroup)
 class ClickEventInfo<T:Event> {
 	/**
 	 * The click event everything else corresponds to.
@@ -48,10 +49,18 @@ class ClickEventInfo<T:Event> {
 		this.outEvent = outEvent;
 		this.upEvent = upEvent;
 	}
-	private function getValue(status:ClickStatus, event:T):InteractiveObject {
+	
+	private function getOriginalValue(status:ClickStatus, event:T):InteractiveObject {
+		return getValue(status.origin, event);
+	}
+	private function setOriginalValue(status:ClickStatus, event:T, value:InteractiveObject):InteractiveObject {
+		setValue(status, event, value);
+		return setValue(status.origin, event, value);
+	}
+	private function getValue(status:BaseClickStatus, event:T):InteractiveObject {
 		return null;
 	}
-	private function setValue(status:ClickStatus, event:T, value:InteractiveObject):InteractiveObject {
+	private function setValue(status:BaseClickStatus, event:T, value:InteractiveObject):InteractiveObject {
 		return null;
 	}
 	private function getStageValue(stage:Stage, event:T):InteractiveObject {
@@ -75,10 +84,10 @@ class LeftClickEventInfo extends MouseClickEventInfo {
 		super(MouseEvent.CLICK, MouseEvent.MOUSE_DOWN, MouseEvent.MOUSE_UP);
 	}
 	
-	private override function getValue(status:ClickStatus, event:MouseEvent):InteractiveObject {
+	private override function getValue(status:BaseClickStatus, event:MouseEvent):InteractiveObject {
 		return status.mouseDownLeft;
 	}
-	private override function setValue(status:ClickStatus, event:MouseEvent, value:InteractiveObject):InteractiveObject {
+	private override function setValue(status:BaseClickStatus, event:MouseEvent, value:InteractiveObject):InteractiveObject {
 		return status.mouseDownLeft = value;
 	}
 	private override function getStageValue(stage:Stage, event:MouseEvent):InteractiveObject {
@@ -96,10 +105,10 @@ class MiddleClickEventInfo extends MouseClickEventInfo {
 		super(MouseEvent.MIDDLE_CLICK, MouseEvent.MIDDLE_MOUSE_DOWN, MouseEvent.MIDDLE_MOUSE_UP);
 	}
 	
-	private override function getValue(status:ClickStatus, event:MouseEvent):InteractiveObject {
+	private override function getValue(status:BaseClickStatus, event:MouseEvent):InteractiveObject {
 		return status.mouseDownMiddle;
 	}
-	private override function setValue(status:ClickStatus, event:MouseEvent, value:InteractiveObject):InteractiveObject {
+	private override function setValue(status:BaseClickStatus, event:MouseEvent, value:InteractiveObject):InteractiveObject {
 		return status.mouseDownMiddle = value;
 	}
 	private override function getStageValue(stage:Stage, event:MouseEvent):InteractiveObject {
@@ -117,10 +126,10 @@ class RightClickEventInfo extends MouseClickEventInfo {
 		super(MouseEvent.RIGHT_CLICK, MouseEvent.RIGHT_MOUSE_DOWN, MouseEvent.RIGHT_MOUSE_UP);
 	}
 	
-	private override function getValue(status:ClickStatus, event:MouseEvent):InteractiveObject {
+	private override function getValue(status:BaseClickStatus, event:MouseEvent):InteractiveObject {
 		return status.mouseDownRight;
 	}
-	private override function setValue(status:ClickStatus, event:MouseEvent, value:InteractiveObject):InteractiveObject {
+	private override function setValue(status:BaseClickStatus, event:MouseEvent, value:InteractiveObject):InteractiveObject {
 		return status.mouseDownRight = value;
 	}
 	private override function getStageValue(stage:Stage, event:MouseEvent):InteractiveObject {
@@ -138,10 +147,10 @@ class TouchEventInfo extends ClickEventInfo<TouchEvent> {
 		super(TouchEvent.TOUCH_TAP, TouchEvent.TOUCH_BEGIN, TouchEvent.TOUCH_OVER, TouchEvent.TOUCH_ROLL_OUT, TouchEvent.TOUCH_END);
 	}
 	
-	private override function getValue(status:ClickStatus, event:TouchEvent):InteractiveObject {
+	private override function getValue(status:BaseClickStatus, event:TouchEvent):InteractiveObject {
 		return status.touchTargets[event.touchPointID];
 	}
-	private override function setValue(status:ClickStatus, event:TouchEvent, value:InteractiveObject):InteractiveObject {
+	private override function setValue(status:BaseClickStatus, event:TouchEvent, value:InteractiveObject):InteractiveObject {
 		return status.touchTargets[event.touchPointID] = value;
 	}
 	private override function getStageValue(stage:Stage, event:TouchEvent):InteractiveObject {
