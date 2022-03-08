@@ -115,8 +115,6 @@ class ClickStatus extends EventDispatcher {
 }
 
 private class EventInfoWrapper {
-	public var active:Bool = true;
-	
 	private var status:ClickStatus;
 	private var info:ClickEventInfo<Event>;
 	
@@ -126,27 +124,21 @@ private class EventInfoWrapper {
 	}
 	
 	public function add(object:InteractiveObject):Void {
-		if(active) {
-			object.addEventListener(info.downEvent, onPointerDown);
-			object.addEventListener(info.overEvent, onPointerOver);
-			object.addEventListener(info.outEvent, onPointerOut);
-			object.addEventListener(info.upEvent, onPointerUp);
-		}
+		object.addEventListener(info.downEvent, onPointerDown);
+		object.addEventListener(info.overEvent, onPointerOver);
+		object.addEventListener(info.outEvent, onPointerOut);
+		object.addEventListener(info.upEvent, onPointerUp);
 	}
 	
 	public function remove(object:InteractiveObject):Void {
-		if(active) {
-			object.removeEventListener(info.downEvent, onPointerDown);
-			object.removeEventListener(info.overEvent, onPointerOver);
-			object.removeEventListener(info.outEvent, onPointerOut);
-			object.removeEventListener(info.upEvent, onPointerUp);
-		}
+		object.removeEventListener(info.downEvent, onPointerDown);
+		object.removeEventListener(info.overEvent, onPointerOver);
+		object.removeEventListener(info.outEvent, onPointerOut);
+		object.removeEventListener(info.upEvent, onPointerUp);
 	}
 	
 	public function onPointerDown(e:Event):Void {
-		if(active) {
-			info.setValue(status, e, e.target);
-		}
+		info.setValue(status, e, e.target);
 	}
 	
 	public function onPointerOver(e:Event):Void {

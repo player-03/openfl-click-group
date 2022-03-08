@@ -1,6 +1,5 @@
 package com.player03.clickgroup;
 
-import openfl.geom.Point;
 import com.player03.clickgroup.ClickGroup;
 import openfl.display.InteractiveObject;
 import openfl.display.Stage;
@@ -49,17 +48,6 @@ class ClickEventInfo<T:Event> {
 		this.outEvent = outEvent;
 		this.upEvent = upEvent;
 	}
-	
-	private static function getLocalCoordinates(localX:Float, localY:Float, oldTarget:InteractiveObject, newTarget:InteractiveObject):Point {
-		var point:Point = new Point(localX, localY);
-		if(oldTarget != newTarget) {
-			point = oldTarget.localToGlobal(point);
-			return newTarget.globalToLocal(point);
-		} else {
-			return point;
-		}
-	}
-	
 	private function getValue(status:ClickStatus, event:T):InteractiveObject {
 		return null;
 	}
